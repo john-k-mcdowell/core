@@ -273,10 +273,16 @@ class DaikinClimate(DaikinEntity, ClimateEntity):
     def hvac_action(self) -> HVACAction | None:
         """Return the current state."""
         ret = HA_STATE_TO_CURRENT_HVAC.get(self.hvac_mode)
+        if ret not in (HVACAction.COOLING, HVACAction.HEATING):
+            return ret
         if (
-            ret in (HVACAction.COOLING, HVACAction.HEATING)
-            and self.device.support_compressor_frequency
+            self.device.support_compressor_frequency
             and self.device.compressor_frequency == 0
+        ):
+            return HVACAction.IDLE
+        if (
+            self.device.support_compressor_running
+            and not self.device.compressor_running
         ):
             return HVACAction.IDLE
         return ret
